@@ -9,11 +9,16 @@ so both runs write identical bytes.
 Local check:
     mkdir -p out && MAKEFUN_OUTPUT_DIR=out python3 main.py
 """
+import hashlib
 import os
 import shutil
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def main() -> None:
@@ -22,8 +27,9 @@ def main() -> None:
     source = HERE / "entry.png"
     dest = target / "entry.png"
     shutil.copyfile(source, dest)
-    if dest.stat().st_size != source.stat().st_size:
-        raise SystemExit("entry.png copy failed: size mismatch")
+    if _sha256(dest) != _sha256(source):
+        raise SystemExit("entry.png copy failed: hash mismatch")
+    print(f"wrote {dest} ({dest.stat().st_size} bytes)")
 
 
 if __name__ == "__main__":
